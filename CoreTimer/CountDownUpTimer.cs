@@ -9,17 +9,20 @@ namespace CoreTimer
     public class Program : BorderLessMoveFormWithMouse
     {
         private const int SetupWidthConst = 22;
-        private bool _countDown = false;
-        private bool _alwaysOnTop = false;
-        
-        private readonly IContainer components = new Container();
+        private readonly bool _isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+        private bool _countDown = true;
 
+        private bool _alwaysOnTop = false; // this will get set to true in constructor after its setup
         private TimeSpan _requestedTimeSpan;
         private TimeSpan _soFarTimeSpan;
+
+        // Form items
+        private readonly IContainer components = new Container();
         private readonly Timer _secondTimer = new Timer {Interval = 1000, Enabled = false};
         private readonly Timer _miliSecondTimer = new Timer {Interval = 300, Enabled = false};
-        private readonly ContextMenuStrip _menuStrip = new ContextMenuStrip{AutoSize = false,Size = new Size(130,50)};
+        private readonly ContextMenuStrip _menuStrip = new ContextMenuStrip {AutoSize = false, Size = new Size(130, 50)};
 
+        // Setup Panel Items
         private readonly Panel _setupPanel = new Panel();
         private readonly Label _setupLabelHour = new Label {Text = "HH", AutoSize = false, Width = SetupWidthConst};
         private readonly Label _setupLabelMin = new Label {Text = "MM", AutoSize = false, Width = SetupWidthConst};
@@ -29,7 +32,7 @@ namespace CoreTimer
         private readonly TextBox _setupSecTextBox = new TextBox {MaxLength = 2, Width = SetupWidthConst,};
         private readonly Button _setupStartBtn = new Button {Text = "Start", AutoSize = false};
 
-
+        // Display Panel Items
         private readonly Panel _displayPanel = new Panel {Visible = false};
 
         private readonly Label _displayCountDownUpLabelMain =
@@ -41,50 +44,51 @@ namespace CoreTimer
 
         private Program()
         {
-            MoveMouseButton = MouseButtons.Left;
             _secondTimer.Tick += SecondTick;
             _miliSecondTimer.Tick += (sender, args) => Console.Beep(); // BEEPER 
-            AutoSize = false;
-            FormBorderStyle = FormBorderStyle.FixedToolWindow;
-            this.Width = 100;
-            this.Height = 100;
-            AutoScaleMode = AutoScaleMode.Font;
-            
-            this.SecondaryActionOccurance+= OnSecondaryActionOccurance;
-
-            Text = "Timer";
+            this.AutoSize = false;
+            this.FormBorderStyle = FormBorderStyle.FixedToolWindow;
+            this.Size = new Size(100, 100);
+            this.Text = "MkbMain ExampleTimer";
+            SecondaryActionOccurance += OnSecondaryActionOccurance;
+            InitIcon();
+            InitMoveWindow();
+            InitMenu();
             InitSetupPanel();
             InitDisplayPanel();
-            _setupStartBtn.Click += SetupStartBtnOnClick;
+        }
 
-            _displayDoneBtn.Click += (sender, args) =>
-            {
-                _secondTimer.Enabled = false;
-                _miliSecondTimer.Enabled = false;
-                _displayPanel.Visible = false;
-                _setupPanel.Visible = true;
-            };
 
-            InitMoveWindow();
-            
-     
-            AlwaysOnTopToggle();
-            var exitButton = new ToolStripButton{Text = "Exit"};
+        private void InitMenu()
+        {
+            var exitButton = new ToolStripButton {Text = "Exit"};
             exitButton.Click += (sender, args) => Application.Exit();
             _menuStrip.Items.Add(exitButton);
-      
-            this.ContextMenuStrip = _menuStrip;
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+
+            ContextMenuStrip = _menuStrip;
+            if (!_isWindows)
             {
-                var alwaysOnTopButton = new ToolStripButton{Text = "Always On Top"};
-                alwaysOnTopButton.Click+= (sender, args) =>  AlwaysOnTopToggle();
-                _menuStrip.Items.Add(alwaysOnTopButton);
+                return;
+            }
+            
+            AlwaysOnTopToggle();
+            var alwaysOnTopButton = new ToolStripButton {Text = "Always On Top"};
+            alwaysOnTopButton.Click += (sender, args) => AlwaysOnTopToggle();
+            _menuStrip.Items.Add(alwaysOnTopButton);
+        }
+
+        private void InitIcon()
+        {
+            var path = $"{Environment.CurrentDirectory}{(_isWindows ? "\\icon.ico" : "/icon.ico")}";
+            if (System.IO.File.Exists(path))
+            {
+                this.Icon = Icon.ExtractAssociatedIcon(path);
             }
         }
 
         private void OnSecondaryActionOccurance(object sender, MouseEventArgs eventargs)
         {
-            _menuStrip.Location = this.Location;
+            _menuStrip.Location = Location;
             _menuStrip.Show();
         }
 
@@ -96,7 +100,7 @@ namespace CoreTimer
             _displayCountDownUpLabelMain.Text = $"{(int) timeSpan.TotalHours}:{timeSpan.Minutes}";
             _displayCountDownUpLabelSec.Text = timeSpan.Seconds.ToString();
 
-            this.Text = timeSpan.ToString();
+            Text = timeSpan.ToString();
 
             if (_soFarTimeSpan >= _requestedTimeSpan)
             {
@@ -163,8 +167,16 @@ namespace CoreTimer
             _displayPanel.Controls.Add(_displayCountDownUpLabelSec);
             _displayDoneBtn.Location = _setupStartBtn.Location;
             _displayDoneBtn.Size = _setupStartBtn.Size;
-            Controls.Add(_displayPanel);
+            this.Controls.Add(_displayPanel);
             _displayPanel.Controls.Add(_displayDoneBtn);
+
+            _displayDoneBtn.Click += (sender, args) =>
+            {
+                _secondTimer.Enabled = false;
+                _miliSecondTimer.Enabled = false;
+                _displayPanel.Visible = false;
+                _setupPanel.Visible = true;
+            };
         }
 
         private void InitSetupPanel()
@@ -186,7 +198,9 @@ namespace CoreTimer
             _setupPanel.Controls.Add(_setupLabelMin);
             _setupPanel.Controls.Add(_setupLabelSec);
             _setupPanel.Controls.Add(_setupStartBtn);
-            Controls.Add(_setupPanel);
+            this.Controls.Add(_setupPanel);
+
+            _setupStartBtn.Click += SetupStartBtnOnClick;
         }
 
 
@@ -199,13 +213,12 @@ namespace CoreTimer
 
             base.Dispose(disposing);
         }
-        
-        
+
 
         private void AlwaysOnTopToggle()
         {
-
-            SetWindowPosHelper. SetWindowPos(this.Handle, _alwaysOnTop ? SetWindowPosHelper.HWND_NOTOPMOST :SetWindowPosHelper. HWND_TOPMOST, 0, 0, 0, 0, SetWindowPosHelper.TOPMOST_FLAGS);
+            SetWindowPosHelper.SetWindowPos(Handle, _alwaysOnTop ? SetWindowPosHelper.HWND_NOTOPMOST : SetWindowPosHelper.HWND_TOPMOST, 0, 0, 0, 0,
+                SetWindowPosHelper.TOPMOST_FLAGS);
             _alwaysOnTop = !_alwaysOnTop;
         }
 
