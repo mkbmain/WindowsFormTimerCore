@@ -104,7 +104,7 @@ namespace CoreTimer
             }
         }
 
-        private void SetupStartBtnOnClick(object? sender, EventArgs e)
+        private void SetupStartBtnOnClick(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(_setupHourTextBox.Text))
             {

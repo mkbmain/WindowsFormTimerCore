@@ -37,7 +37,7 @@ namespace CoreTimer
         }
 
 
-        protected void MouseDown(object ob, MouseEventArgs e)
+        protected new void MouseDown(object ob, MouseEventArgs e)
         {
             if (e.Button == SecondaryActionMouseButton)
             {
@@ -51,7 +51,7 @@ namespace CoreTimer
             }
         }
 
-        protected void MouseUp(object ob, MouseEventArgs e)
+        protected new void MouseUp(object ob, MouseEventArgs e)
         {
             if (e.Button == MoveMouseButton)
             {
@@ -83,7 +83,7 @@ namespace CoreTimer
             }
         }
 
-        protected void MouseMove(object ob, MouseEventArgs e)
+        protected new void MouseMove(object ob, MouseEventArgs e)
         {
             if (_mouseButtonDown)
             {
