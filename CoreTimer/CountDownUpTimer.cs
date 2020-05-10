@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 namespace CoreTimer
@@ -9,14 +10,15 @@ namespace CoreTimer
     {
         private const int SetupWidthConst = 22;
         private bool _countDown = false;
-
+        private bool _alwaysOnTop = false;
+        
         private readonly IContainer components = new Container();
 
         private TimeSpan _requestedTimeSpan;
         private TimeSpan _soFarTimeSpan;
         private readonly Timer _secondTimer = new Timer {Interval = 1000, Enabled = false};
         private readonly Timer _miliSecondTimer = new Timer {Interval = 300, Enabled = false};
-
+        private readonly ContextMenuStrip _menuStrip = new ContextMenuStrip{AutoSize = false,Size = new Size(130,50)};
 
         private readonly Panel _setupPanel = new Panel();
         private readonly Label _setupLabelHour = new Label {Text = "HH", AutoSize = false, Width = SetupWidthConst};
@@ -47,6 +49,8 @@ namespace CoreTimer
             this.Width = 100;
             this.Height = 100;
             AutoScaleMode = AutoScaleMode.Font;
+            
+            this.SecondaryActionOccurance+= OnSecondaryActionOccurance;
 
             Text = "Timer";
             InitSetupPanel();
@@ -62,6 +66,26 @@ namespace CoreTimer
             };
 
             InitMoveWindow();
+            
+     
+            AlwaysOnTopToggle();
+            var exitButton = new ToolStripButton{Text = "Exit"};
+            exitButton.Click += (sender, args) => Application.Exit();
+            _menuStrip.Items.Add(exitButton);
+      
+            this.ContextMenuStrip = _menuStrip;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                var alwaysOnTopButton = new ToolStripButton{Text = "Always On Top"};
+                alwaysOnTopButton.Click+= (sender, args) =>  AlwaysOnTopToggle();
+                _menuStrip.Items.Add(alwaysOnTopButton);
+            }
+        }
+
+        private void OnSecondaryActionOccurance(object sender, MouseEventArgs eventargs)
+        {
+            _menuStrip.Location = this.Location;
+            _menuStrip.Show();
         }
 
         private void SecondTick(object _, EventArgs args)
@@ -174,6 +198,15 @@ namespace CoreTimer
             }
 
             base.Dispose(disposing);
+        }
+        
+        
+
+        private void AlwaysOnTopToggle()
+        {
+
+            SetWindowPosHelper. SetWindowPos(this.Handle, _alwaysOnTop ? SetWindowPosHelper.HWND_NOTOPMOST :SetWindowPosHelper. HWND_TOPMOST, 0, 0, 0, 0, SetWindowPosHelper.TOPMOST_FLAGS);
+            _alwaysOnTop = !_alwaysOnTop;
         }
 
 

@@ -1,3 +1,4 @@
+using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
@@ -7,28 +8,18 @@ namespace CoreTimer
     public class BorderLessMoveFormWithMouse : Form
     {
 
+        protected delegate void SecondaryAction(object sender, MouseEventArgs eventArgs);
+        protected event SecondaryAction SecondaryActionOccurance;
         protected MouseButtons MoveMouseButton = MouseButtons.Left;
-        protected MouseButtons MenuMouseButton = MouseButtons.Right;
-        readonly ContextMenuStrip _menuStrip = new ContextMenuStrip();
+        protected MouseButtons SecondaryActionMouseButton = MouseButtons.Right;
+
         private bool _mouseButtonDown;
         private readonly Timer _hackDontEvenAsk = new Timer {Interval = 33, Enabled = false};
 
         private Point _startPoint;
-        private bool _alwaysOnTop = false;
 
-        private void AlwaysOnTopToggle()
-        {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                return;
-            }
-            var alwaysOnTopButton = new ToolStripButton{Text = "Always On Top"};
-            alwaysOnTopButton.Click+= (sender, args) =>  AlwaysOnTopToggle();
-            _menuStrip.Items.Add(alwaysOnTopButton);
-            SetWindowPosHelper. SetWindowPos(this.Handle, _alwaysOnTop ? SetWindowPosHelper.HWND_NOTOPMOST :SetWindowPosHelper. HWND_TOPMOST, 0, 0, 0, 0, SetWindowPosHelper.TOPMOST_FLAGS);
+        
 
-            _alwaysOnTop = !_alwaysOnTop;
-        }
         
         protected BorderLessMoveFormWithMouse()
         {
@@ -43,26 +34,14 @@ namespace CoreTimer
                 _hackDontEvenAsk.Enabled = false;
             };
 
-  
-            var exitButton = new ToolStripButton{Text = "Exit"};
-            exitButton.Click += (sender, args) => Application.Exit();
-            
-
-            _menuStrip.Width = 555;
-            AlwaysOnTopToggle();
-            _menuStrip.Items.Add(exitButton);
-      
-            this.ContextMenuStrip = _menuStrip;
-
         }
 
 
         protected void MouseDown(object ob, MouseEventArgs e)
         {
-            if (e.Button == MenuMouseButton)
+            if (e.Button == SecondaryActionMouseButton)
             {
-                _menuStrip.Location = this.Location;
-                _menuStrip.Show();
+                SecondaryActionOccurance?.Invoke(ob,e);
             }
 
             if (e.Button == MoveMouseButton)
@@ -82,10 +61,6 @@ namespace CoreTimer
 
         private void MarkUsMovableItems(Control item)
         {
-            if (item == _menuStrip)
-            {
-                return;
-            }
 
             item.MouseDown += MouseDown;
             item.MouseMove += MouseMove;
