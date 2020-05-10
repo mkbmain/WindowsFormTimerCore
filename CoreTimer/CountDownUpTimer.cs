@@ -52,10 +52,10 @@ namespace CoreTimer
             this.Text = "MkbMain ExampleTimer";
             SecondaryActionOccurance += OnSecondaryActionOccurance;
             InitIcon();
-            InitMoveWindow();
             InitMenu();
             InitSetupPanel();
             InitDisplayPanel();
+            InitMoveWindow();
         }
 
 
