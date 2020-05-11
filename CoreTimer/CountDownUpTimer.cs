@@ -8,9 +8,13 @@ namespace CoreTimer
 {
     public class Program : BorderLessMoveFormWithMouse
     {
+        private const string StopSymbol = "■";
+        private const string PlaySymbol = "»";
+        private const string PauseSymbol = "||";
         private const int SetupWidthConst = 22;
         private readonly bool _isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
         private bool _countDown = true;
+        private bool _pause = false;
 
         private bool _alwaysOnTop = false; // this will get set to true in constructor after its setup
         private TimeSpan _requestedTimeSpan;
@@ -20,7 +24,7 @@ namespace CoreTimer
         private readonly IContainer components = new Container();
         private readonly Timer _secondTimer = new Timer {Interval = 1000, Enabled = false};
         private readonly Timer _miliSecondTimer = new Timer {Interval = 300, Enabled = false};
-        private readonly ContextMenuStrip _menuStrip = new ContextMenuStrip {AutoSize = false, Size = new Size(130, 50)};
+        private readonly ContextMenuStrip _menuStrip = new ContextMenuStrip {AutoSize = false, Size = new Size(130, 70)};
 
         // Setup Panel Items
         private readonly Panel _setupPanel = new Panel();
@@ -30,7 +34,7 @@ namespace CoreTimer
         private readonly TextBox _setupHourTextBox = new TextBox {MaxLength = 2, Width = SetupWidthConst, Location = new Point(5, 15)};
         private readonly TextBox _setupMinTextBox = new TextBox {MaxLength = 2, Width = SetupWidthConst,};
         private readonly TextBox _setupSecTextBox = new TextBox {MaxLength = 2, Width = SetupWidthConst,};
-        private readonly Button _setupStartBtn = new Button {Text = "Start", AutoSize = false};
+        private readonly Button _setupStartBtn = new Button {Text = "Start",Height = 20, AutoSize = false };
 
         // Display Panel Items
         private readonly Panel _displayPanel = new Panel {Visible = false};
@@ -39,7 +43,8 @@ namespace CoreTimer
             new Label {Left = 1, Font = new Font(FontFamily.GenericMonospace, 17), AutoSize = false, Text = ""};
 
         private readonly Label _displayCountDownUpLabelSec = new Label {Font = new Font(FontFamily.GenericMonospace, 10), AutoSize = true, Text = ""};
-        private readonly Button _displayDoneBtn = new Button {Text = "Stop"};
+        private readonly Label _displayStopBtn = new Label {Text = StopSymbol, BorderStyle = BorderStyle.FixedSingle};
+        private readonly Label _displayPausePlayBtn = new Label {Text = PauseSymbol, BorderStyle = BorderStyle.FixedSingle};
 
 
         private Program()
@@ -63,18 +68,27 @@ namespace CoreTimer
         {
             var exitButton = new ToolStripButton {Text = "Exit"};
             exitButton.Click += (sender, args) => Application.Exit();
-            _menuStrip.Items.Add(exitButton);
 
             ContextMenuStrip = _menuStrip;
-            if (!_isWindows)
-            {
-                return;
-            }
             
-            AlwaysOnTopToggle();
-            var alwaysOnTopButton = new ToolStripButton {Text = "Always On Top"};
-            alwaysOnTopButton.Click += (sender, args) => AlwaysOnTopToggle();
-            _menuStrip.Items.Add(alwaysOnTopButton);
+            var countDown = new ToolStripButton {Text = "Count Up"};
+            countDown.Click += (sender, args) =>
+            {
+                _countDown = !_countDown;
+              var btn =  sender as ToolStripButton;
+              btn.Text = _countDown ? "Count Up " : "Count Down";
+            };
+        
+            if (_isWindows)
+            {
+                AlwaysOnTopToggle();
+                var alwaysOnTopButton = new ToolStripButton {Text = "Always On Top"};
+                alwaysOnTopButton.Click += (sender, args) => AlwaysOnTopToggle();
+                _menuStrip.Items.Add(alwaysOnTopButton);
+            }
+            _menuStrip.Items.Add(countDown);
+            _menuStrip.Items.Add(exitButton);
+
         }
 
         private void InitIcon()
@@ -94,6 +108,11 @@ namespace CoreTimer
 
         private void SecondTick(object _, EventArgs args)
         {
+            if (_pause)
+            {
+                return;
+            }
+
             _soFarTimeSpan = _soFarTimeSpan.Add(new TimeSpan(0, 0, 1));
             var timeSpan = _countDown ? (_requestedTimeSpan - _soFarTimeSpan) : _soFarTimeSpan;
 
@@ -159,18 +178,28 @@ namespace CoreTimer
 
             _displayCountDownUpLabelMain.Width = _displayPanel.Width;
             _displayCountDownUpLabelMain.TextAlign = ContentAlignment.MiddleCenter;
-            _displayCountDownUpLabelSec.Click += (sender, args) => _countDown = !_countDown;
-            _displayCountDownUpLabelMain.Click += (sender, args) => _countDown = !_countDown;
             _displayCountDownUpLabelSec.Top = _displayCountDownUpLabelMain.Bottom;
             _displayCountDownUpLabelSec.Left = 33;
+            
             _displayPanel.Controls.Add(_displayCountDownUpLabelMain);
             _displayPanel.Controls.Add(_displayCountDownUpLabelSec);
-            _displayDoneBtn.Location = _setupStartBtn.Location;
-            _displayDoneBtn.Size = _setupStartBtn.Size;
+            _displayStopBtn.Location = _setupStartBtn.Location;
+            _displayStopBtn.Height = _setupStartBtn.Height ;
+            _displayStopBtn.Width = (_setupStartBtn.Width / 2) -5;
+            _displayPausePlayBtn.Size = _displayStopBtn.Size;
+            _displayPausePlayBtn.Location = new Point(_displayStopBtn.Right+5,_displayStopBtn.Location.Y);
+            
+            
             this.Controls.Add(_displayPanel);
-            _displayPanel.Controls.Add(_displayDoneBtn);
+            _displayPanel.Controls.Add(_displayStopBtn);
+            _displayPanel.Controls.Add(_displayPausePlayBtn);
 
-            _displayDoneBtn.Click += (sender, args) =>
+            _displayPausePlayBtn.Click += (sender, args) =>
+            {
+                _pause = !_pause;
+                _displayPausePlayBtn.Text = _pause ? PlaySymbol : PauseSymbol;
+            };
+            _displayStopBtn.Click += (sender, args) =>
             {
                 _secondTimer.Enabled = false;
                 _miliSecondTimer.Enabled = false;
