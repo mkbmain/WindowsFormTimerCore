@@ -24,7 +24,7 @@ namespace CoreTimer
         private readonly IContainer components = new Container();
         private readonly Timer _secondTimer = new Timer {Interval = 1000, Enabled = false};
         private readonly Timer _miliSecondTimer = new Timer {Interval = 300, Enabled = false};
-        private readonly ContextMenuStrip _menuStrip = new ContextMenuStrip {AutoSize = false, Size = new Size(130, 70)};
+        private readonly ContextMenuStrip _menuStrip = new ContextMenuStrip {AutoSize = false, Width = 130};
 
         // Setup Panel Items
         private readonly Panel _setupPanel = new Panel();
@@ -34,7 +34,7 @@ namespace CoreTimer
         private readonly TextBox _setupHourTextBox = new TextBox {MaxLength = 2, Width = SetupWidthConst, Location = new Point(5, 15)};
         private readonly TextBox _setupMinTextBox = new TextBox {MaxLength = 2, Width = SetupWidthConst,};
         private readonly TextBox _setupSecTextBox = new TextBox {MaxLength = 2, Width = SetupWidthConst,};
-        private readonly Button _setupStartBtn = new Button {Text = "Start",Height = 20, AutoSize = false };
+        private readonly Button _setupStartBtn = new Button {Text = "Start", Height = 20, AutoSize = false};
 
         // Display Panel Items
         private readonly Panel _displayPanel = new Panel {Visible = false};
@@ -70,15 +70,15 @@ namespace CoreTimer
             exitButton.Click += (sender, args) => Application.Exit();
 
             ContextMenuStrip = _menuStrip;
-            
+
             var countDown = new ToolStripButton {Text = "Count Up"};
             countDown.Click += (sender, args) =>
             {
                 _countDown = !_countDown;
-              var btn =  sender as ToolStripButton;
-              btn.Text = _countDown ? "Count Up " : "Count Down";
+                var btn = sender as ToolStripButton;
+                btn.Text = _countDown ? "Count Up " : "Count Down";
             };
-        
+
             if (_isWindows)
             {
                 AlwaysOnTopToggle();
@@ -86,9 +86,11 @@ namespace CoreTimer
                 alwaysOnTopButton.Click += (sender, args) => AlwaysOnTopToggle();
                 _menuStrip.Items.Add(alwaysOnTopButton);
             }
+
             _menuStrip.Items.Add(countDown);
             _menuStrip.Items.Add(exitButton);
 
+            _menuStrip.Height = 10 + (_menuStrip.Items.Count * 20);
         }
 
         private void InitIcon()
@@ -106,6 +108,12 @@ namespace CoreTimer
             _menuStrip.Show();
         }
 
+        private static string FormatInt(int item)
+        {
+            var output = item.ToString();
+            return output.Length < 2 ? $"0{output}" : output;
+        }
+
         private void SecondTick(object _, EventArgs args)
         {
             if (_pause)
@@ -116,8 +124,8 @@ namespace CoreTimer
             _soFarTimeSpan = _soFarTimeSpan.Add(new TimeSpan(0, 0, 1));
             var timeSpan = _countDown ? (_requestedTimeSpan - _soFarTimeSpan) : _soFarTimeSpan;
 
-            _displayCountDownUpLabelMain.Text = $"{(int) timeSpan.TotalHours}:{timeSpan.Minutes}";
-            _displayCountDownUpLabelSec.Text = timeSpan.Seconds.ToString();
+            _displayCountDownUpLabelMain.Text = $"{FormatInt((int) timeSpan.TotalHours)}:{FormatInt(timeSpan.Minutes)}";
+            _displayCountDownUpLabelSec.Text = FormatInt(timeSpan.Seconds);
 
             Text = timeSpan.ToString();
 
@@ -180,16 +188,16 @@ namespace CoreTimer
             _displayCountDownUpLabelMain.TextAlign = ContentAlignment.MiddleCenter;
             _displayCountDownUpLabelSec.Top = _displayCountDownUpLabelMain.Bottom;
             _displayCountDownUpLabelSec.Left = 33;
-            
+
             _displayPanel.Controls.Add(_displayCountDownUpLabelMain);
             _displayPanel.Controls.Add(_displayCountDownUpLabelSec);
             _displayStopBtn.Location = _setupStartBtn.Location;
-            _displayStopBtn.Height = _setupStartBtn.Height ;
-            _displayStopBtn.Width = (_setupStartBtn.Width / 2) -5;
+            _displayStopBtn.Height = _setupStartBtn.Height;
+            _displayStopBtn.Width = (_setupStartBtn.Width / 2) - 5;
             _displayPausePlayBtn.Size = _displayStopBtn.Size;
-            _displayPausePlayBtn.Location = new Point(_displayStopBtn.Right+5,_displayStopBtn.Location.Y);
-            
-            
+            _displayPausePlayBtn.Location = new Point(_displayStopBtn.Right + 5, _displayStopBtn.Location.Y);
+
+
             this.Controls.Add(_displayPanel);
             _displayPanel.Controls.Add(_displayStopBtn);
             _displayPanel.Controls.Add(_displayPausePlayBtn);
