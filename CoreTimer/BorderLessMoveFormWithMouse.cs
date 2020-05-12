@@ -12,21 +12,28 @@ namespace CoreTimer
         protected MouseButtons SecondaryActionMouseButton = MouseButtons.Right;
         private bool _mouseButtonDown;
         private Point _startPoint;
-        
-        protected BorderLessMoveFormWithMouse()
+        private Size _wantedSize;
+        protected BorderLessMoveFormWithMouse(Size size)
         {
             this.ShowInTaskbar = true;
-
+            _wantedSize= size;
             // this is a hack as if i set formborder style to non in constructor the size won't stay the same ...
             // shrug no idea why caught me out on debugging for 10 mins
             var timer = new Timer {Interval = 33, Enabled = false};
             timer.Enabled = true;
             timer.Tick += (sender, args) =>
             {
-                this.FormBorderStyle = FormBorderStyle.None;
+             SetupFormSize(_wantedSize);
                 timer.Enabled = false;
                 timer.Dispose();
             };
+        }
+
+        protected void SetupFormSize(Size size)
+        {
+            this.FormBorderStyle = FormBorderStyle.FixedToolWindow;
+            this.Size = size;
+            this.FormBorderStyle = FormBorderStyle.None;
         }
 
         protected new void MouseDown(object ob, MouseEventArgs e)

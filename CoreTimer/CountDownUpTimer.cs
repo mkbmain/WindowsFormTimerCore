@@ -12,6 +12,7 @@ namespace CoreTimer
         private const string PlaySymbol = "»";
         private const string PauseSymbol = "||";
         private const int SetupWidthConst = 22;
+        private static Size _size = new Size(100, 100);
         private readonly bool _isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
         private bool _countDown = true;
         private bool _pause = false;
@@ -25,6 +26,7 @@ namespace CoreTimer
         private readonly Timer _secondTimer = new Timer {Interval = 1000, Enabled = false};
         private readonly Timer _miliSecondTimer = new Timer {Interval = 300, Enabled = false};
         private readonly ContextMenuStrip _menuStrip = new ContextMenuStrip {AutoSize = false, Width = 130};
+        private readonly NotifyIcon _notifyIcon;
 
         // Setup Panel Items
         private readonly Panel _setupPanel = new Panel();
@@ -47,13 +49,12 @@ namespace CoreTimer
         private readonly Label _displayPausePlayBtn = new Label {Text = PauseSymbol, BorderStyle = BorderStyle.FixedSingle};
 
 
-        private Program()
+        private Program() : base(_size)
         {
+            _notifyIcon = new System.Windows.Forms.NotifyIcon(this.components) {Text = "MkbMain ExampleTimer", Visible = true};
             _secondTimer.Tick += SecondTick;
             _miliSecondTimer.Tick += (sender, args) => Console.Beep(); // BEEPER 
             this.AutoSize = false;
-            this.FormBorderStyle = FormBorderStyle.FixedToolWindow;
-            this.Size = new Size(100, 100);
             this.Text = "MkbMain ExampleTimer";
             SecondaryActionOccurance += OnSecondaryActionOccurance;
             InitIcon();
@@ -87,9 +88,17 @@ namespace CoreTimer
                 _menuStrip.Items.Add(alwaysOnTopButton);
             }
 
+            var showInTaskBad = new ToolStripButton {Text = "Show In Task bar"};
+            showInTaskBad.Click += (sender, args) =>
+            {
+                this.ShowInTaskbar = !this.ShowInTaskbar;
+                SetupFormSize(_size);
+            };
+            _menuStrip.Items.Add(showInTaskBad);
             _menuStrip.Items.Add(countDown);
-            _menuStrip.Items.Add(exitButton);
 
+            _menuStrip.Items.Add(exitButton);
+            _notifyIcon.ContextMenuStrip = ContextMenuStrip;
             _menuStrip.Height = 10 + (_menuStrip.Items.Count * 20);
         }
 
@@ -98,7 +107,9 @@ namespace CoreTimer
             var path = $"{Environment.CurrentDirectory}{(_isWindows ? "\\icon.ico" : "/icon.ico")}";
             if (System.IO.File.Exists(path))
             {
-                this.Icon = Icon.ExtractAssociatedIcon(path);
+                var icon = Icon.ExtractAssociatedIcon(path);
+                _notifyIcon.Icon = icon;
+                this.Icon = icon;
             }
         }
 
