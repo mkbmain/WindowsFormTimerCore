@@ -192,8 +192,8 @@ namespace CoreTimer
 
         private void InitDisplayPanel()
         {
-            _displayPanel.Width = Width;
-            _displayPanel.Height = Height;
+            _displayPanel.Width = _size.Width;
+            _displayPanel.Height = _size.Height;
 
             _displayCountDownUpLabelMain.Width = _displayPanel.Width;
             _displayCountDownUpLabelMain.TextAlign = ContentAlignment.MiddleCenter;
