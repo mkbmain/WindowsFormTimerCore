@@ -6,25 +6,25 @@ using System.Windows.Forms;
 
 namespace CoreTimer
 {
-    public class Program : BorderLessMoveFormWithMouse
+    public sealed class Program : BorderLessMoveFormWithMouse
     {
         private const string StopSymbol = "■";
         private const string PlaySymbol = "»";
         private const string PauseSymbol = "||";
         private const int SetupWidthConst = 22;
-        private static Size _size = new Size(100, 100);
+        private static readonly Size FormDefaultSize = new Size(100, 100);
         private readonly bool _isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
         private bool _countDown = true;
-        private bool _pause = false;
+        private bool _pause;
 
-        private bool _alwaysOnTop = false; // this will get set to true in constructor after its setup
+        private bool _alwaysOnTop; // this will get set to true in constructor after its setup
         private TimeSpan _requestedTimeSpan;
         private TimeSpan _soFarTimeSpan;
 
         // Form items
         private readonly IContainer components = new Container();
         private readonly Timer _secondTimer = new Timer {Interval = 1000, Enabled = false};
-        private readonly Timer _miliSecondTimer = new Timer {Interval = 300, Enabled = false};
+        private readonly Timer _milisecondTimer = new Timer {Interval = 300, Enabled = false};
         private readonly ContextMenuStrip _menuStrip = new ContextMenuStrip {AutoSize = false, Width = 130};
         private readonly NotifyIcon _notifyIcon;
 
@@ -49,13 +49,13 @@ namespace CoreTimer
         private readonly Label _displayPausePlayBtn = new Label {Text = PauseSymbol, BorderStyle = BorderStyle.FixedSingle};
 
 
-        private Program() : base(_size)
+        private Program() : base(FormDefaultSize)
         {
             _notifyIcon = new System.Windows.Forms.NotifyIcon(this.components) {Text = "MkbMain ExampleTimer", Visible = true};
             _secondTimer.Tick += SecondTick;
-            _miliSecondTimer.Tick += (sender, args) => Console.Beep(); // BEEPER 
-            this.AutoSize = false;
-            this.Text = "MkbMain ExampleTimer";
+            _milisecondTimer.Tick += (sender, args) => Console.Beep(); // BEEPER 
+            AutoSize = false;
+            Text = "MkbMain ExampleTimer";
             SecondaryActionOccurance += OnSecondaryActionOccurance;
             InitIcon();
             InitMenu();
@@ -92,7 +92,7 @@ namespace CoreTimer
             showInTaskBad.Click += (sender, args) =>
             {
                 this.ShowInTaskbar = !this.ShowInTaskbar;
-                SetupFormSize(_size);
+                SetupFormSize(FormDefaultSize);
             };
             _menuStrip.Items.Add(showInTaskBad);
             _menuStrip.Items.Add(countDown);
@@ -142,7 +142,7 @@ namespace CoreTimer
 
             if (_soFarTimeSpan >= _requestedTimeSpan)
             {
-                _miliSecondTimer.Enabled = true;
+                _milisecondTimer.Enabled = true;
             }
         }
 
@@ -192,7 +192,7 @@ namespace CoreTimer
 
         private void InitDisplayPanel()
         {
-            _displayPanel.Size = _size;
+            _displayPanel.Size = FormDefaultSize;
 
             _displayCountDownUpLabelMain.Width = _displayPanel.Width;
             _displayCountDownUpLabelMain.TextAlign = ContentAlignment.MiddleCenter;
@@ -220,7 +220,7 @@ namespace CoreTimer
             _displayStopBtn.Click += (sender, args) =>
             {
                 _secondTimer.Enabled = false;
-                _miliSecondTimer.Enabled = false;
+                _milisecondTimer.Enabled = false;
                 _displayPanel.Visible = false;
                 _setupPanel.Visible = true;
             };
